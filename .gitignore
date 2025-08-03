@@ -1,0 +1,49 @@
+### .gitignore
+
+```gitignore
+# Snowflake credentials and config
+config/snowflake_config.yaml
+*.private.yaml
+*.secret.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+.venv
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files (except samples)
+data/generated/
+data/large/
+*.csv
+!data/sample/*.csv
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
