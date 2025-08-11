@@ -1,0 +1,37 @@
+-- Task orchestration for daily ETL processing
+
+USE DATABASE BANKING_MARTS;
+
+-- Task 1: Process Customer Dimension
+CREATE OR REPLACE TASK DAILY_CUSTOMER_DIMENSION_TASK
+    WAREHOUSE = ETL_WH
+    SCHEDULE = '0 2 * * *'  -- Daily at 2 AM
+    COMMENT = 'Daily customer dimension processing with SCD Type 2'
+AS
+    CALL BANKING_MARTS.DIM_CUSTOMER.PROCESS_CUSTOMER_DIMENSION();
+
+-- Task 2: Process Transaction Facts (depends on customer dimension)
+CREATE OR REPLACE TASK DAILY_TRANSACTION_FACT_TASK
+    WAREHOUSE = ETL_WH
+    AFTER DAILY_CUSTOMER_DIMENSION_TASK
+    COMMENT = 'Daily transaction fact processing'
+AS
+    CALL BANKING_MARTS.FACT_TRANSACTIONS.PROCESS_TRANSACTION_FACTS(
+        DATEADD(day, -1, CURRENT_DATE()), 
+        DATEADD(day, -1, CURRENT_DATE())
+    );
+
+-- Task 3: Process Daily Summaries (depends on transaction facts)
+CREATE OR REPLACE TASK DAILY_CUSTOMER_SUMMARY_TASK
+    WAREHOUSE = ETL_WH
+    AFTER DAILY_TRANSACTION_FACT_TASK
+    COMMENT = 'Daily customer summary aggregation'
+AS
+    CALL BANKING_MARTS.FACT_TRANSACTIONS.PROCESS_DAILY_CUSTOMER_SUMMARY(
+        DATEADD(day, -1, CURRENT_DATE())
+    );
+
+-- Start the task tree 
+ALTER TASK DAILY_CUSTOMER_DIMENSION_TASK RESUME;
+ALTER TASK DAILY_TRANSACTION_FACT_TASK RESUME;
+ALTER TASK DAILY_CUSTOMER_SUMMARY_TASK RESUME;
